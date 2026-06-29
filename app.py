@@ -17,11 +17,13 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 from audit_log import append_entry, get_log
-from signals import llm_signal
+from signals import compute_confidence, llm_signal, stylometric_signal
 
 load_dotenv()
 
 app = Flask(__name__)
+# Render emojis in labels as UTF-8 rather than \uXXXX escapes.
+app.json.ensure_ascii = False
 
 # Limits are applied in Milestone 5; in-memory storage is fine for the MVP.
 limiter = Limiter(
@@ -48,20 +50,19 @@ def submit():
     content_id = str(uuid.uuid4())
     timestamp = _now_iso()
 
-    signal = llm_signal(text)
-    llm_score = signal["score"]
-
-    # Milestone 3 placeholders — replaced with real mapping in M4.
-    attribution = "classified"
-    confidence = llm_score
+    # Signal 1 (LLM) and Signal 2 (stylometry), combined 60/40 in compute_confidence.
+    llm_score = llm_signal(text)["score"]
+    stylometric_score = stylometric_signal(text)["score"]
+    scoring = compute_confidence(llm_score, stylometric_score)
 
     entry = {
         "timestamp": timestamp,
         "content_id": content_id,
         "creator_id": creator_id,
+        "attribution": scoring["attribution"],
+        "confidence": scoring["confidence"],
         "llm_score": llm_score,
-        "attribution": attribution,
-        "confidence": confidence,
+        "stylometric_score": stylometric_score,
         "status": "classified",
     }
     append_entry(entry)
@@ -69,10 +70,11 @@ def submit():
     return jsonify(
         {
             "content_id": content_id,
-            "attribution": attribution,
-            "confidence": confidence,
+            "attribution": scoring["attribution"],
+            "confidence": scoring["confidence"],
             "llm_score": llm_score,
-            "label": "Analysis pending second signal",
+            "stylometric_score": stylometric_score,
+            "label": scoring["label"],
             "timestamp": timestamp,
         }
     )

@@ -6,6 +6,9 @@ Signal 2 (stylometric heuristics) is added in Milestone 4.
 
 import json
 import os
+import re
+import statistics
+import string
 
 from groq import Groq
 
@@ -66,3 +69,155 @@ def _extract_json(raw: str) -> str:
     if start != -1 and end != -1 and end > start:
         return raw[start : end + 1]
     return raw
+
+
+# ---------------------------------------------------------------------------
+# Signal 2: Stylometric heuristics (Milestone 4)
+# ---------------------------------------------------------------------------
+
+_MIN_WORDS = 30  # below this, stylometry is unreliable; return neutral 0.5
+
+# Abstract / formal words LLMs overuse. High density of these is a strong AI tell.
+_AI_BUZZWORDS = frozenset(
+    {
+        "transformative", "paradigm", "furthermore", "moreover", "essential",
+        "stakeholders", "leverage", "navigate", "robust", "comprehensive",
+        "fundamental", "crucial", "significant", "deployment", "implementation",
+    }
+)
+
+# Weights for the five sub-scores (sum to 1.0). Average sentence length and
+# buzzword density carry the most weight; variance and punctuation are
+# down-weighted because AI text need not be perfectly uniform to be AI.
+_STYLO_WEIGHTS = {
+    "avg_sentence_length": 0.25,
+    "ai_buzzword_density": 0.40,
+    "sentence_length_variance": 0.05,
+    "type_token_ratio": 0.10,
+    "punctuation_density": 0.20,
+}
+
+
+def stylometric_signal(text: str) -> dict:
+    """Score `text` on measurable statistical properties.
+
+    Returns {"score": float (0.0-1.0), "metrics": {...}} where higher score
+    means more AI-like. Combines five normalized sub-scores via a weighted
+    average (see _STYLO_WEIGHTS): average sentence length, AI-buzzword density,
+    sentence-length variance, type-token ratio, and punctuation density.
+    """
+    tokens = re.findall(r"\b\w+\b", text.lower())
+    total_words = len(tokens)
+
+    if total_words < _MIN_WORDS:
+        return {
+            "score": 0.5,
+            "metrics": {
+                "note": (
+                    f"Insufficient text length ({total_words} words); "
+                    f"stylometry unreliable below {_MIN_WORDS} words."
+                )
+            },
+        }
+
+    sentences = [s for s in re.split(r"[.!?]+", text) if s.strip()]
+    word_counts = [len(re.findall(r"\b\w+\b", s)) for s in sentences]
+    word_counts = [c for c in word_counts if c > 0]
+    num_sentences = len(word_counts) or 1
+
+    # --- Average sentence length ---------------------------------------------
+    # AI trends long: > 18 words avg is a strong tell.
+    avg_sentence_length = total_words / num_sentences
+    if avg_sentence_length > 18:
+        avg_len_sub = 0.8
+    elif avg_sentence_length >= 10:
+        avg_len_sub = 0.5
+    else:
+        avg_len_sub = 0.2
+
+    # --- AI buzzword density -------------------------------------------------
+    buzz_count = sum(1 for w in tokens if w in _AI_BUZZWORDS)
+    buzzword_density = buzz_count / total_words
+    # Density >= 0.04 (roughly 1 buzzword per 25 words) saturates to a full AI tell.
+    buzzword_sub = min(1.0, buzzword_density / 0.04)
+
+    # --- Sentence length variance (down-weighted) ----------------------------
+    variance = statistics.pvariance(word_counts) if len(word_counts) > 1 else 0.0
+    # Very low variance (< 5) -> high AI score (0.8+); falls to 0 by variance 25.
+    variance_sub = max(0.0, 1.0 - variance / 25.0)
+
+    # --- Type-token ratio (lexical diversity) --------------------------------
+    ttr = len(set(tokens)) / total_words
+    # TTR >= 0.6 -> ~0 (very human); lower TTR -> higher AI score.
+    ttr_sub = max(0.0, min(1.0, (0.6 - ttr) / 0.4))
+
+    # --- Punctuation density (down-weighted) ---------------------------------
+    punct_count = sum(1 for ch in text if ch in string.punctuation)
+    punct_density = punct_count / len(text) if text else 0.0
+    # Conventional density (~0.05, range 0.04-0.06) -> high AI score; falls off
+    # to 0 outside [0.0, 0.10].
+    punct_sub = max(0.0, 1.0 - abs(punct_density - 0.05) / 0.05)
+
+    w = _STYLO_WEIGHTS
+    score = (
+        w["avg_sentence_length"] * avg_len_sub
+        + w["ai_buzzword_density"] * buzzword_sub
+        + w["sentence_length_variance"] * variance_sub
+        + w["type_token_ratio"] * ttr_sub
+        + w["punctuation_density"] * punct_sub
+    )
+
+    return {
+        "score": round(score, 4),
+        "metrics": {
+            "avg_sentence_length": round(avg_sentence_length, 4),
+            "ai_buzzword_density": round(buzzword_density, 4),
+            "sentence_length_variance": round(variance, 4),
+            "type_token_ratio": round(ttr, 4),
+            "punctuation_density": round(punct_density, 4),
+        },
+    }
+
+
+# ---------------------------------------------------------------------------
+# Confidence scoring (Milestone 4)
+# ---------------------------------------------------------------------------
+
+# Exact transparency label text from planning.md. The human-written variant has
+# no emoji in the spec; ✅ is added here to match the AI/uncertain pattern.
+_AI_LABEL = (
+    "⚠️ **Likely AI-generated.** Our system found strong signals that this "
+    "content was produced by an AI model. The creator can appeal this label if "
+    "it's incorrect."
+)
+_UNCERTAIN_LABEL = (
+    "🟡 **Uncertain attribution.** Our system found mixed signals. This content "
+    "has been flagged for human review and may be either AI-assisted or "
+    "human-written with a formal style. The creator can provide context through "
+    "an appeal."
+)
+_HUMAN_LABEL = (
+    "✅ **Likely human-written.** Our system found strong signals that this "
+    "content was produced by a human author."
+)
+
+
+def compute_confidence(llm_score: float, stylometric_score: float) -> dict:
+    """Combine the two signals into a confidence score and attribution label.
+
+    Weighted 60/40 in favor of the LLM signal (richer semantic context).
+    """
+    combined = 0.6 * llm_score + 0.4 * stylometric_score
+
+    if combined >= 0.75:
+        attribution, label = "likely_ai", _AI_LABEL
+    elif combined >= 0.40:
+        attribution, label = "uncertain", _UNCERTAIN_LABEL
+    else:
+        attribution, label = "likely_human", _HUMAN_LABEL
+
+    return {
+        "confidence": round(combined, 4),
+        "attribution": attribution,
+        "label": label,
+    }
