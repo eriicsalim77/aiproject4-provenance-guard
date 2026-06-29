@@ -1,11 +1,11 @@
-"""Provenance Guard — main Flask application (Milestone 3 foundation).
+"""Provenance Guard — main Flask application.
 
-POST /submit  — run Signal 1 (LLM), write an audit entry, return structured JSON.
+POST /submit  — run both signals, score, write an audit entry, return JSON.
+POST /appeal  — record a creator appeal and mark the original entry under review.
 GET  /log     — return recent audit log entries.
 
-Milestone 4 adds Signal 2 (stylometry) and confidence scoring; Milestone 5 adds
-labels, appeals, and rate limits. Flask-Limiter is wired up here but no limits
-are applied yet.
+Signal 1 is the LLM classifier; Signal 2 is stylometric heuristics; the two are
+combined 60/40. /submit is rate limited; /appeal and /log are not.
 """
 
 import uuid
@@ -16,7 +16,7 @@ from flask import Flask, jsonify, request
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-from audit_log import append_entry, get_log
+from audit_log import append_entry, get_log, update_entry_status
 from signals import compute_confidence, llm_signal, stylometric_signal
 
 load_dotenv()
@@ -25,7 +25,7 @@ app = Flask(__name__)
 # Render emojis in labels as UTF-8 rather than \uXXXX escapes.
 app.json.ensure_ascii = False
 
-# Limits are applied in Milestone 5; in-memory storage is fine for the MVP.
+# In-memory storage is fine for the MVP; limits are applied per-route below.
 limiter = Limiter(
     key_func=get_remote_address,
     app=app,
@@ -39,6 +39,7 @@ def _now_iso() -> str:
 
 
 @app.route("/submit", methods=["POST"])
+@limiter.limit("10 per minute;100 per day")
 def submit():
     data = request.get_json(silent=True) or {}
     text = data.get("text")
@@ -76,6 +77,42 @@ def submit():
             "stylometric_score": stylometric_score,
             "label": scoring["label"],
             "timestamp": timestamp,
+        }
+    )
+
+
+@app.route("/appeal", methods=["POST"])
+def appeal():
+    data = request.get_json(silent=True) or {}
+    content_id = data.get("content_id")
+    creator_reasoning = data.get("creator_reasoning")
+
+    if not content_id or not creator_reasoning:
+        return (
+            jsonify({"error": "Both 'content_id' and 'creator_reasoning' are required."}),
+            400,
+        )
+
+    # Mark the original classification as under review; None means no such id.
+    original = update_entry_status(content_id, "under_review")
+    if original is None:
+        return jsonify({"error": "content_id not found"}), 404
+
+    append_entry(
+        {
+            "timestamp": _now_iso(),
+            "content_id": content_id,
+            "creator_id": original.get("creator_id"),
+            "status": "appeal_received",
+            "appeal_reasoning": creator_reasoning,
+        }
+    )
+
+    return jsonify(
+        {
+            "status": "appeal_received",
+            "content_id": content_id,
+            "review_status": "under_review",
         }
     )
 

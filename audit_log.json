@@ -1,52 +1,119 @@
 [
   {
-    "timestamp": "2026-06-29T02:46:51Z",
-    "content_id": "30432734-5d2e-447d-aa0b-f2c7bcc63162",
-    "creator_id": "test-ai",
-    "attribution": "likely_ai",
-    "confidence": 0.7789,
-    "llm_score": 0.9,
-    "stylometric_score": 0.5972,
-    "status": "classified"
-  },
-  {
-    "timestamp": "2026-06-29T02:46:52Z",
-    "content_id": "a9bb5913-9dfe-4e9a-873d-2376f1ae3063",
-    "creator_id": "test-human",
-    "attribution": "likely_human",
-    "confidence": 0.2012,
-    "llm_score": 0.2,
-    "stylometric_score": 0.2029,
-    "status": "classified"
-  },
-  {
-    "timestamp": "2026-06-29T02:46:53Z",
-    "content_id": "9d3ec25f-0331-4d0b-b015-1600908cbab7",
-    "creator_id": "test-formal",
+    "timestamp": "2026-06-29T02:51:33Z",
+    "content_id": "e6d29f60-eb13-4dfb-b3eb-af32490d0cfd",
+    "creator_id": "appeal-test-user",
     "attribution": "uncertain",
-    "confidence": 0.6981,
-    "llm_score": 0.9,
-    "stylometric_score": 0.3953,
-    "status": "classified"
-  },
-  {
-    "timestamp": "2026-06-29T02:46:54Z",
-    "content_id": "6cacc314-1aa4-4414-a2c3-6895a3700fcb",
-    "creator_id": "test-edited",
-    "attribution": "likely_human",
-    "confidence": 0.2179,
-    "llm_score": 0.2,
-    "stylometric_score": 0.2447,
-    "status": "classified"
-  },
-  {
-    "timestamp": "2026-06-29T02:47:26Z",
-    "content_id": "0bdeb604-2345-4ea1-b735-7a1d3e6785d4",
-    "creator_id": "test-edited",
-    "attribution": "uncertain",
-    "confidence": 0.7398,
+    "confidence": 0.682,
     "llm_score": 0.8,
-    "stylometric_score": 0.6494,
+    "stylometric_score": 0.5049,
+    "status": "under_review"
+  },
+  {
+    "timestamp": "2026-06-29T02:51:52Z",
+    "content_id": "e6d29f60-eb13-4dfb-b3eb-af32490d0cfd",
+    "creator_id": "appeal-test-user",
+    "status": "appeal_received",
+    "appeal_reasoning": "I am a non-native English speaker writing a formal academic excerpt. My style is uniform because the genre requires it, not because it is AI-generated."
+  },
+  {
+    "timestamp": "2026-06-29T02:53:42Z",
+    "content_id": "8622fd5c-bc8d-46c2-8e8d-5c662585029f",
+    "creator_id": "ratelimit-test",
+    "attribution": "uncertain",
+    "confidence": 0.68,
+    "llm_score": 0.8,
+    "stylometric_score": 0.5,
+    "status": "classified"
+  },
+  {
+    "timestamp": "2026-06-29T02:53:45Z",
+    "content_id": "e9ef7ff5-ae0d-4ff7-aca7-1f06671347fe",
+    "creator_id": "ratelimit-test",
+    "attribution": "uncertain",
+    "confidence": 0.68,
+    "llm_score": 0.8,
+    "stylometric_score": 0.5,
+    "status": "classified"
+  },
+  {
+    "timestamp": "2026-06-29T02:53:47Z",
+    "content_id": "b2742136-0fb1-484d-80be-a71b63b0cb7b",
+    "creator_id": "ratelimit-test",
+    "attribution": "uncertain",
+    "confidence": 0.68,
+    "llm_score": 0.8,
+    "stylometric_score": 0.5,
+    "status": "classified"
+  },
+  {
+    "timestamp": "2026-06-29T02:53:50Z",
+    "content_id": "c373f671-4e1b-4aea-a074-0d3e83696753",
+    "creator_id": "ratelimit-test",
+    "attribution": "uncertain",
+    "confidence": 0.68,
+    "llm_score": 0.8,
+    "stylometric_score": 0.5,
+    "status": "classified"
+  },
+  {
+    "timestamp": "2026-06-29T02:53:53Z",
+    "content_id": "d01748eb-6e26-4c93-9df4-7e3e6042fa90",
+    "creator_id": "ratelimit-test",
+    "attribution": "uncertain",
+    "confidence": 0.68,
+    "llm_score": 0.8,
+    "stylometric_score": 0.5,
+    "status": "classified"
+  },
+  {
+    "timestamp": "2026-06-29T02:53:55Z",
+    "content_id": "35a29c6e-5471-4a82-9ee0-ecaa856abb16",
+    "creator_id": "ratelimit-test",
+    "attribution": "uncertain",
+    "confidence": 0.68,
+    "llm_score": 0.8,
+    "stylometric_score": 0.5,
+    "status": "classified"
+  },
+  {
+    "timestamp": "2026-06-29T02:53:58Z",
+    "content_id": "8e965d82-fcb9-4e52-8a49-cece08e6d7a1",
+    "creator_id": "ratelimit-test",
+    "attribution": "uncertain",
+    "confidence": 0.68,
+    "llm_score": 0.8,
+    "stylometric_score": 0.5,
+    "status": "classified"
+  },
+  {
+    "timestamp": "2026-06-29T02:54:01Z",
+    "content_id": "43da2345-680e-4f1f-ba74-4972b792ffa9",
+    "creator_id": "ratelimit-test",
+    "attribution": "uncertain",
+    "confidence": 0.68,
+    "llm_score": 0.8,
+    "stylometric_score": 0.5,
+    "status": "classified"
+  },
+  {
+    "timestamp": "2026-06-29T02:54:03Z",
+    "content_id": "227a4868-72df-48b2-8429-c543a20b0e73",
+    "creator_id": "ratelimit-test",
+    "attribution": "uncertain",
+    "confidence": 0.68,
+    "llm_score": 0.8,
+    "stylometric_score": 0.5,
+    "status": "classified"
+  },
+  {
+    "timestamp": "2026-06-29T02:54:06Z",
+    "content_id": "1c04a426-a784-44b9-bb42-5f0fb16cc921",
+    "creator_id": "ratelimit-test",
+    "attribution": "uncertain",
+    "confidence": 0.68,
+    "llm_score": 0.8,
+    "stylometric_score": 0.5,
     "status": "classified"
   }
 ]
