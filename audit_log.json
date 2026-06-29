@@ -1,0 +1,20 @@
+[
+  {
+    "timestamp": "2026-06-29T02:34:30Z",
+    "content_id": "7b1bbc7c-de4e-4f84-be5c-774db14ebb23",
+    "creator_id": "test-ai",
+    "llm_score": 0.8,
+    "attribution": "classified",
+    "confidence": 0.8,
+    "status": "classified"
+  },
+  {
+    "timestamp": "2026-06-29T02:34:31Z",
+    "content_id": "1981f53a-a954-44cc-95d1-a30333e81b6d",
+    "creator_id": "test-human",
+    "llm_score": 0.2,
+    "attribution": "classified",
+    "confidence": 0.2,
+    "status": "classified"
+  }
+]
